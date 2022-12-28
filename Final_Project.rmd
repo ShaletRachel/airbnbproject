@@ -1,6 +1,6 @@
 ---
 title: "NYC Airbnb"
-author: "Shalet Rachel Saji -300324371"
+author: "Shalet Rachel Saji"
 date: '`r format(Sys.time(), "%B %d, %Y")`'
 output: pdf_document
 fontsize:
