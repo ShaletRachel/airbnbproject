@@ -1,0 +1,251 @@
+---
+title: "NYC Airbnb"
+author: "Shalet Rachel Saji -300324371"
+date: '`r format(Sys.time(), "%B %d, %Y")`'
+output: pdf_document
+fontsize:
+        12pt 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+```
+
+
+
+# Introduction
+
+Airbnb - A new form of Accommodation.
+
+Airbnb has seen a meteoric growth since its inception in 2008 with the number of rentals listed on its website. New York City has been one of the hottest markets for Airbnb, with over 52,000 listings as of November 2018. People love traveling and Airbnb can always offer different travel experience for the travelers. Airbnb is an international lodginhg and hospitality indiustry operating online all over the world.
+Stay homes or vacation places has become an option at our fingertips with their advent online over mobile and web platforms.
+
+In this project, I will perform an exploratory analysis of the Airbnb dataset to understand the trend of rental landscape in new york by various static and interactive visualizations. My question is what factors  makes someone a superhost and what are the factors influencing the price listing in NYC.
+
+```{r, echo=FALSE}
+listing <- read.csv("C:/Users/shale/Downloads/listings.csv")
+```
+
+# Packages Required
+
+Below are the list of packages that used in this project.
+
+* library(ggplot2)
+* library(dplyr)
+* library(tidyverse)
+
+# Steps:
+
+* Data Loading
+* Data Visualization
+* Hypothesis test
+* Prediction using the test
+
+
+# Data Preparation
+
+The Original Dataset was collected from Github and it was well cleaned. All the data variables were properly named, so the columns need not be renamed. The dataset has 96 column and 50968 rows.
+
+
+# Exploratory Data Analysis
+
+**Which Type of Listings are there in the Neighborhood?**
+
+Analysis to find out the type of listing (Entire home/Apt.,Private room, Shared room) that are common to a particular neighborhood.
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE,fig.width = 7, fig.height =4.5, fig.align = "center"}
+property_df <-  listing %>% 
+  group_by(neighbourhood_group_cleansed, room_type) %>% 
+  summarize(Freq = n())
+
+total_property <-  listing %>% 
+  filter(room_type %in% c("Private room","Entire home/apt","Shared room")) %>% 
+  group_by(neighbourhood_group_cleansed) %>% 
+  summarize(sum = n())
+
+property_ratio <- merge (property_df, total_property, by="neighbourhood_group_cleansed")
+
+property_ratio <- property_ratio %>% 
+  mutate(ratio = Freq/sum)
+
+ggplot(property_ratio, aes(x=neighbourhood_group_cleansed, y = ratio, fill = room_type)) +
+  geom_bar(position = "dodge", stat="identity") + 
+  xlab("Borough") + ylab ("Count") +
+  scale_fill_discrete(name = "Room Type") + 
+  scale_y_continuous(labels = scales::percent) +
+  ggtitle("Which types of Listings are there in NYC?",
+          subtitle = "Count of Listing Type by Borough ") +
+          theme(plot.title = element_text(face = "bold", size = 14) ) +
+          theme(plot.subtitle = element_text(face = "bold", color = "black")) +
+          theme(plot.caption = element_text(color = "grey68"))+scale_color_gradient(low="#d3cbcb", high="#852eaa")+
+          scale_fill_manual("Room Type", values=c("#357b8a","#3D0323", "#04716F")) +
+          xlab("Neighborhood") + ylab("Percentage")
+```
+
+The common listing type in all neighborhoods excluding Manhattan is the private room and the least common in all neighborhoods is shared room.
+
+\newpage
+
+# Demand and Price Analysis
+
+**Mean Price Comparison for each neighborhood**
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE,fig.width = 5, fig.height =3, fig.align = "center"}
+listing %>% 
+filter(!(is.na(neighbourhood_group_cleansed))) %>% 
+  filter(!(neighbourhood_group_cleansed == "Unknown")) %>% 
+  group_by(neighbourhood_group_cleansed) %>% 
+  summarise(meanprice = mean(price, na.rm = TRUE)) %>% 
+  ggplot(aes(x = reorder(neighbourhood_group_cleansed, meanprice), y = meanprice, fill = neighbourhood_group_cleansed)) +
+  geom_bar(stat ="identity", color = "black", fill="#04716F") +
+  coord_flip() +
+  theme_gray() +
+  labs(x = "Neighbourhood Group", y = "Price") +
+  geom_text(aes(label = round(meanprice,digit = 3)), hjust = 2.0, color = "white", size = 3.5) +
+  ggtitle("Mean Price comparison for each Neighbourhood Group") + 
+  xlab("Neighbourhood Group") + 
+  ylab("Mean Price") +
+  theme(legend.position = "none",
+        plot.title = element_text(color = "black", size = 14, face = "bold"),
+        plot.subtitle = element_text(color = "black"),
+        axis.title.y = element_text(),
+        axis.title.x = element_text(),
+        axis.ticks = element_blank())
+```
+
+Manhattan recorded the highest average price of listings with 192.904 USD. This is because of the reason that the most common type of listings in Manhattan is Entire home/apt.  
+
+The second position is for Brooklyn with an average price of 132.94 USD.
+
+$\vspace{0.1cm}$
+
+**Mean Price Comparison for each Room Type.**
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE, fig.width = 5, fig.height = 3.6, fig.align = "center"}
+listing %>% 
+  filter(!(is.na(room_type))) %>% 
+  filter(!(room_type == "Unknown")) %>% 
+  group_by(room_type) %>% 
+  summarise(meanprice = mean(price, na.rm = TRUE)) %>% 
+  ggplot(aes(x = reorder(room_type, meanprice), y = meanprice, fill = room_type)) +
+  geom_bar(stat ="identity", color = "black", fill="#0A0142") +
+  theme_gray() +
+  labs(x = "Room Type", y = "Price") +
+  geom_text(aes(label = round(meanprice,digit = 3)), vjust =2, color = "white", size = 3.5) +
+  ggtitle("Mean Price comparison of all Room Types") + 
+  xlab("Room Type") + 
+  ylab("Mean Price") +
+  theme(legend.position = "none",
+        plot.title = element_text(color = "black", size = 14, face = "bold"),
+        axis.title.y = element_text(),
+        axis.title.x = element_text(),
+        axis.ticks = element_blank())
+```
+
+The highest average price is for the Entire home/apt with 210.137 USD followed by private room and shared room with 87.729 USD and 71.613 USD.
+
+**Price variation on weekends**
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+week <- read.csv("/Users/HP/Desktop/group.csv")
+week$date <- as.Date(week$date )
+week <-na.omit(week)
+```
+
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE, fig.width = 5, fig.height = 3.6, fig.align = "center"}
+week <- week %>% mutate(day = strftime(date,'%A'))
+week$day <- factor(week$day, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"), labels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+ggplot(week, aes(x = factor(day), 
+                     y = price)) + 
+  geom_bar(stat = "identity", color = "#7EC460")+
+  ggtitle("Price variation on weekends")+
+  labs(x = "Days", y = "Average Price") +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+From the graph, it is evident that on weekends the price rates are higher compared to the other days of the weeks.
+
+# Other Interest Insights
+
+**What factors makes someone a superhost?**
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+review <- read.csv("/Users/HP/Desktop/reviews.csv")
+```
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE, fig.width = 5, fig.height = 3, fig.align = "center"}
+review_list <-listing
+review_num <- review %>% group_by(listing_id)%>% summarise(sum1 = n())
+review_list$host_response_rate = as.integer(gsub("%","",review_list$host_response_rate))
+review_list$review_scores_rating = as.integer(gsub("%","",review_list$review_scores_rating))
+list1 = review_list[!is.na(review_list$review_scores_rating),]
+list1 = list1[!is.na(list1$host_is_superhost),]
+list1 = list1[list1$host_is_superhost!='',]
+list1$host_is_superhost[list1$host_is_superhost == "t"] <- "True"
+list1$host_is_superhost[list1$host_is_superhost == "f"] <- "False"
+list1$host_is_superhost <- factor(list1$host_is_superhost)
+
+colnames(review_num) = c("id","sum")
+list1 = merge(list1, review_num, by = "id")
+colnames(list1)[which(names(list1) == "host_is_superhost")] <- "Superhost"
+
+superhost = ggplot(list1,aes(host_response_rate,review_scores_rating,color=Superhost))+geom_point() +xlab("Host Response Rate") +ylab("Avg Ratings")+ ggtitle("What does it take to be a Super Host")
+superhost + ggtitle("What factors makes someone a superhost?")+
+  theme(plot.title = element_text(face = "bold")) +
+  scale_color_manual(values=c("#999999", "red"))
+```
+
+Airbnb has some conditions that need to be satisfied to become a Superhost. Conditions include maintaining the review rate above 50%, and the response rate above 90%, etc. 
+
+Upon analyzing, the interesting insights are that most super-hosts will come under the high rating, the high response category. In terms of Ratings, all hosts are rated 70% and above.
+Concluding that most Airbnb hosts lie in the high rating, the high response category, but only a small portion gets the super hosts award. To become a Superhost takes a lot more than high ratings & response rates.
+
+# Interpretation of Models
+
+The main aim of this project is to analyze the factors influencing over price listing in NYC by doing a Hypothesis testing.
+
+$H_0$ : The factors room types, minimum nights, Neighborhoods and reviews have no influence in the price listing.
+
+$H_a$ : The factors room types, minimum nights, Neighborhoods and reviews have influence in the price listing. 
+
+$\vspace{0.1cm}$
+
+```{r, echo=FALSE}
+MLA <-lm(formula = price ~ minimum_nights + number_of_reviews + neighbourhood_group_cleansed + 
+room_type, data = listing)
+```
+
+```{r, echo=FALSE}
+anova(MLA)
+```
+
+$\vspace{0.1cm}$
+
+The main focus of this model is to find out that the factors neighborhoods, room types, minimum nights and reviews have influence over listing prices in NYC.
+
+Upon analysis, it can be concluded that the above visualizations and statistical analysis	indicate that the factors such as neighborhoods, room types, minimum nights and the number of reviews influence the price listing on the NYC Airbnb. After investigating the above regression model, the null hypothesis rejected and accepted the alternative hypothesis. The analysis of the variance table shows an extremely low p-value (2.2e-16) which is less than 0.05.
+
+# Conclusion
+
+* The most common listing type in all neighbourhoods except Manhattan is the Private room.
+
+* The least common in all neighbourhoods are shared room.
+
+* Manhattan recorded the highest average price of listings with 192.904 USD followed by Brooklyn.
+
+* Bronx has the lowest average price of listings with 86.036 USD.
+
+* Average price of room type is higher for Entire home/apt followed by Private room and Shared room.
+
+* On Weekends, the price rates are higher compared to the other days of the weeks.
+
+* Most Airbnb hosts lie in the high rating the high response category, but only a small portion gets the super hosts position.
+
+* Discarded the null hypothesis test and accepted the alternate hypothesis test and have strong evidence that the factors such as neighbourhoods, room types, minimum nights and the number of reviews influence the price listing on the NYC Airbnb.
+
+
+
+
